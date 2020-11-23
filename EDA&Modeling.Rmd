@@ -1,0 +1,24 @@
+---
+title: "EDA&Modeling"
+author: "Ziyi Bai"
+date: "11/23/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load("ggplot2","tidyverse","rstanarm","dplyr")
+setwd("/Users/baiziyi/Desktop/MSSP/MA678/midterm project")
+```
+
+## Import Data
+```{r}
+sephora <- read.csv("sephora.csv")
+```
+
+## Initial EDA 
+
+```{r pressure, echo=FALSE}
+# Category & Rating
+
+```
