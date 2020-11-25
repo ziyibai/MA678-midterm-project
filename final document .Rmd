@@ -75,3 +75,7 @@ Then, I count each product's Marketing Flags. I used length function and there a
 
 Step2: Further EDA
 
+I suppose how a product choose to promote itself may influence its rating. So, I divide original dataset into 2 groups. One is have marketing flags, no matter how many a product has, another one is without marketing flags. Then, I made boxplot of these 2 datasets. 
+
+![Boxplot of Rating For Products Have Marketing Flags](/Users/baiziyi/Desktop/MA678-midterm-project/7.jpeg)
+![Boxplot of Rating For Products Don't Have Marketing Flags](/Users/baiziyi/Desktop/MA678-midterm-project/8.jpeg)
