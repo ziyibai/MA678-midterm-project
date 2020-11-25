@@ -2,7 +2,7 @@
 title: "MA678 Midterm Project Final Document"
 author: "Ziyi Bai"
 date: "11/23/2020"
-output: pdf_document
+output: html_document
 framework: bootstrap
 mode: selfcontained
 widgets: "nyt_home"
@@ -42,6 +42,36 @@ text-indent: 0px;
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Abstract
+### 1. Abstract
 
-I gathered dataset from 
+I gathered dataset from [kaggle](https://www.kaggle.com/raghadalharbi/all-products-available-on-sephora-website?select=sephora_website_dataset.csv), which includes more than 9,000 products with their ratings and ingredient lists. One thing that I am interested is what factors may have more influence on a product's online rating. 
+
+### 2. Introduction 
+
+I am a huge fun of beauty products. I strongly agree with what the person said who posted this dataset: "we need to think about beauty even if we were too busy thinking about COVID-19." In my future career, I really want to be able to work in a cosmetic company and promote their products to potential customers with the help of data analysis. 
+
+Sephora is a world famous cosmetic company which has its customers around the world. I want to analyze what factors may influence a product's rating, which I believe is an important factor when people think about whether to buy a product or not. In my original dataset, there are several variables may give me a hint of what I am interested in. Number of reviews means how many people leave their review toward a product; Love means how many people click love of a product; Price means what is a product's price after discount; Online_only, exclusive, limited_edition and limited_time_offer are binary variables which coded into 1 if a product has such promoting method (coded into 0 if not).  
+
+To get an initial idea of the dataset, I did some EDA about my dataset, like the distribution of love and price variables, calculated the correlation between each variables etc. Then I tried to fit models to explore more specific relationships between each factors. Also, I will use methods to test the validation of my model and try to find the best one.
+
+### 3. Method
+Step1:Initial EDA
+
+At the beginning of my EDA, I want to get some information about the correlation between each variables. As the following graph, only the number_of_reviews variable and love variable show a clear correlation, which is really surprised me.  
+
+![Correlation Of Sephora Intercorrelations](/Users/baiziyi/Desktop/MA678-midterm-project/3.jpeg)
+
+Then, because I have 9169 variables, so I draw distributions of my interested variables: love, price and number of reviews. 
+
+![Distribution Of Rating](/Users/baiziyi/Desktop/MA678-midterm-project/1.jpeg)
+
+![Distrubution Of Product Price](/Users/baiziyi/Desktop/MA678-midterm-project/2.jpeg)
+
+![Distribution Of Number Of Reviews](/Users/baiziyi/Desktop/MA678-midterm-project/5.jpeg)
+
+Then, I count each product's Marketing Flags. I used length function and there are 2153 products choose online only marketing way; 2427 products choose exclusive marketing way; 842 products choose limited edition marketing way; 3 products choose limited time offer marketing way. Furthermore, I add one more column into the dataset to count how many marketing ways a product choose in total. There are 4786 products do not take any marketing ways; 3459 products have only 1 marketing way.    
+
+![Distribution Of Number Of Marketing Ways](/Users/baiziyi/Desktop/MA678-midterm-project/6.jpeg)
+
+Step2: Further EDA
+

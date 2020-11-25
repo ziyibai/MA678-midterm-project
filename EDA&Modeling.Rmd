@@ -7,18 +7,121 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load("ggplot2","tidyverse","rstanarm","dplyr")
-setwd("/Users/baiziyi/Desktop/MSSP/MA678/midterm project")
+pacman::p_load("ggplot2","tidyverse","rstanarm","dplyr","pwr","MASS","arm")
 ```
 
 ## Import Data
 ```{r}
+setwd("/Users/baiziyi/Desktop/MSSP/MA678/midterm project")
 sephora <- read.csv("sephora.csv")
 ```
 
-## Initial EDA 
+## Data Cleaning
+```{r}
+sephora$MarketingFlags[which(sephora$MarketingFlags=='True')]=1
+sephora$MarketingFlags <- as.numeric(sephora$MarketingFlags)
+```
 
+
+## Initial EDA 
 ```{r pressure, echo=FALSE}
 # Category & Rating
+category1 <- aggregate(rating~category,data=sephora,FUN = mean)
+category2 <- aggregate(number_of_reviews~category,data=sephora,FUN = mean)
+category3 <- aggregate(love~category,data=sephora,FUN = mean)
+category4 <- aggregate(price~category,data=sephora,FUN = mean)
+
+left_join(category1,category2,c("category"="category")) -> category
+left_join(category3,category, c("category"="category")) -> category
+left_join(category4,category, c("category"="category")) -> category
+```
+
+```{r}
+ p1 <- category[c('101','70','96','32','95','33','52','47','92','53'),]
+ggplot(data=p1,aes(x=category,y=love)) +
+  geom_bar(stat="identity",fill="lightblue",color="black") +
+  labs(title="Average Love For Top10 Most Famous Beauty Products") +
+  xlab("Category") +
+  ylab("Average Love Number") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 13, face = "bold"))
+```
+
+```{r}
+hist(sephora$rating,col="pink")
+hist(sephora$price,col="orange")
+hist(sephora$number_of_reviews,col="lightgreen",breaks = 3)
+hist(sephora$sum,col="purple",breaks=3)
+```
+
+```{r}
+library(corrgram)
+corre <- subset(sephora,select = c("id","brand","rating","love","number_of_reviews","price","online_only","exclusive","limited_edition","limited_time_offer"))
+corre <- data.frame(corre)
+corrgram(corre,order=TRUE,lower.panel=panel.shade,upper.panel=panel.pie,text.panel=panel.txt,main="Correlation Of Sephora Intercorrelations")
+#result <- aov(rating~love*price*number_of_reviews*online_only*exclusive*limited_edition*limited_time_offer,data=sephora)
+#print(summary(result))
+```
+```{r}
+# count marketing flags
+length(which(sephora[,18]==1))
+length(which(sephora[,19]==1))
+length(which(sephora[,20]==1))
+length(which(sephora[,21]==1))
+
+sephora$sum <- sephora$online_only + sephora$exclusive + sephora$limited_edition + sephora$limited_time_offer
+length(which(sephora[,22]==1))
+length(which(sephora[,22]==2))
+length(which(sephora[,22]==3))
+length(which(sephora[,22]==4))
+length(which(sephora[,22]==0))
+```
+
+## Further EDA
+
+```{r}
+#rating of marketing vs. not
+marketing <- filter(sephora, sum!="0")
+no_marketing <- filter(sephora,sum=="0")
+
+ggplot(data=marketing)+
+  geom_boxplot(aes(x=category,y=rating),fill="lightblue")+
+  labs(title="Boxplot of Admit Pain",x="Body Area",y="Admit Pain")+
+  theme(plot.title = element_text(size = 20),
+        axis.text = element_text(size =  18),
+        axis.title.x = element_text(size = 6),
+        axis.title.y = element_text(size = 16)) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=6)) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(data=no_marketing)+
+  geom_boxplot(aes(x=category,y=rating),fill="lightblue")+
+  labs(title="Boxplot of Admit Pain",x="Body Area",y="Admit Pain")+
+  theme(plot.title = element_text(size = 20),
+        axis.text = element_text(size =  18),
+        axis.title.x = element_text(size = 6),
+        axis.title.y = element_text(size = 16)) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=6)) +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+top10 <- sephora[c('4603','5838','273','4953','5843','7037','2822','3587','304','2824'),]
 
 ```
+
+
+## Modeling
+```{r}
+fit1 <- stan_glm(rating~love+number_of_reviews+price+online_only+exclusive+limited_edition+limited_time_offer,data=sephora,refresh=0,digets=2)
+print(fit1)
+
+loo1 <- loo(fit1)
+print(loo1)
+```
+
+
+
+
+
