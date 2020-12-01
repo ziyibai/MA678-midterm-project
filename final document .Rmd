@@ -1,5 +1,5 @@
 ---
-title: "MA678 Midterm Project Final Document"
+title: "What Fcators May Affect A Product's Number Of Love Received? Are There Differ By Different Products?"
 author: "Ziyi Bai"
 date: "11/23/2020"
 output: html_document
@@ -48,34 +48,77 @@ I gathered dataset from [kaggle](https://www.kaggle.com/raghadalharbi/all-produc
 
 ### 2. Introduction 
 
-I am a huge fun of beauty products. I strongly agree with what the person said who posted this dataset: "we need to think about beauty even if we were too busy thinking about COVID-19." In my future career, I really want to be able to work in a cosmetic company and promote their products to potential customers with the help of data analysis. 
+I am a huge fun of beauty products. "We need to think about beauty even if we were too busy thinking about COVID-19." In my future career, I really want to be able to work in a cosmetic company and promote their products to potential customers with the help of data analysis. 
 
-Sephora is a world famous cosmetic company which has its customers around the world. I want to analyze what factors may influence a product's rating, which I believe is an important factor when people think about whether to buy a product or not. In my original dataset, there are several variables may give me a hint of what I am interested in. Number of reviews means how many people leave their review toward a product; Love means how many people click love of a product; Price means what is a product's price after discount; Online_only, exclusive, limited_edition and limited_time_offer are binary variables which coded into 1 if a product has such promoting method (coded into 0 if not).  
+Sephora is a world famous cosmetic company which has its customers around the world. I want to analyze what factors may influence a product's love received and are these factors different from different type of products. I have 143 different kinds of products in my original dataset, so I randomly choose 10 of them for further analysis. To begin with, I will give a brief introduction of what each variable means: Love will be the outcome of my model, which means how many love a product receive from customers;Category column has 10 different types of products: perfume, lipsticks, shampoo, anti-aging product, face mask, eye brushes, eye shadow, hair oil, shaving and candle. Number of reviews means how many people leave their review toward a product. Price means what is a product's current price after discount; Online_only, exclusive, limited_edition and limited_time_offer are binary variables which coded into 1 if a product has such promoting method (coded into 0 if not). Then, I added a new column into the dataset named sum to calculate how many promotion ways a product has. In the following report, I tried to explore the relationship between these variables with number of love a product receive. 
 
-To get an initial idea of the dataset, I did some EDA about my dataset, like the distribution of love and price variables, calculated the correlation between each variables etc. Then I tried to fit models to explore more specific relationships between each factors. Also, I will use methods to test the validation of my model and try to find the best one.
+In the Method part, I did some basic and further EDA about my data to get an initial idea about all variables' relationship. Also, I tried to fit models to explore more specific relationships between each factors. Then, I used internal and external methods to test the validation of my model. Finally, I gave interpretation of the confidence interval and p-value.
 
 ### 3. Method
+
 Step1:Initial EDA
 
-At the beginning of my EDA, I want to get some information about the correlation between each variables. As the following graph, only the number_of_reviews variable and love variable show a clear correlation, which is really surprised me.  
+At the very beginning, I see the inter-correlation between variables in my dataset by using corrgram package in R. As the following graph, the number_of_reviews variable and love variable shows a clear correlation relationship, so I dropped number of reviews variable in the following model fit.
 
-![Correlation Of Sephora Intercorrelations](/Users/baiziyi/Desktop/MA678-midterm-project/3.jpeg)
-
-Then, because I have 9169 variables, so I draw distributions of my interested variables: love, price and number of reviews. 
-
-![Distribution Of Rating](/Users/baiziyi/Desktop/MA678-midterm-project/1.jpeg)
-
-![Distrubution Of Product Price](/Users/baiziyi/Desktop/MA678-midterm-project/2.jpeg)
-
-![Distribution Of Number Of Reviews](/Users/baiziyi/Desktop/MA678-midterm-project/5.jpeg)
-
-Then, I count each product's Marketing Flags. I used length function and there are 2153 products choose online only marketing way; 2427 products choose exclusive marketing way; 842 products choose limited edition marketing way; 3 products choose limited time offer marketing way. Furthermore, I add one more column into the dataset to count how many marketing ways a product choose in total. There are 4786 products do not take any marketing ways; 3459 products have only 1 marketing way.    
-
-![Distribution Of Number Of Marketing Ways](/Users/baiziyi/Desktop/MA678-midterm-project/6.jpeg)
+![(Correlation Of Variables' Intercorrelations)](/Users/baiziyi/Desktop/MA678-midterm-project/1.jpeg)
+---
 
 Step2: Further EDA
 
-I suppose how a product choose to promote itself may influence its rating. So, I divide original dataset into 2 groups. One is have marketing flags, no matter how many a product has, another one is without marketing flags. Then, I made boxplot of these 2 datasets. 
+I want to explore the relationship of love and intended influencer. So, I did EDA between love and each of them. 
 
-![Boxplot of Rating For Products Have Marketing Flags](/Users/baiziyi/Desktop/MA678-midterm-project/7.jpeg)
-![Boxplot of Rating For Products Don't Have Marketing Flags](/Users/baiziyi/Desktop/MA678-midterm-project/8.jpeg)
+First of all, this graph shows the average love of each type of product. I reordered the bar by value of average love, which is clearer to compare. As we can see, lipstick receive the highest average love from customers. The next two category is eye shadow and face mask.
+
+![(Average Number Of Love For 10 Cosmetic Products)](/Users/baiziyi/Desktop/MA678-midterm-project/2.jpeg)
+
+Secondly, I am interested in the number of promotions way's influence on love. I supposed the love increases as the promotion ways increase, however, the graph shows a different story. Mostly, the average value of love shows a clear trend of decreasing as the promotion ways increase, only Eye brushes is an exception. 
+
+![(Boxplot of Love For Products With Different Number Of Promotion Ways)](/Users/baiziyi/Desktop/MA678-midterm-project/3.jpeg)
+
+Thirdly, I draw a graph to show how the number of love changes as the product's price increasing by different category. Generally, as price increasing, the love decreases. This pattern is clearly on perfume, face masks, eyeshadow and lipstick category. 
+
+![(How the love change with the increase of price )](/Users/baiziyi/Desktop/MA678-midterm-project/4.jpeg)
+
+Last but not the least, I make graph about how the number of love changes as the product's rating increasing by different category. Generally, love will increases as the rating of a product increasing.
+
+![(How the love change with the increase of rating )](/Users/baiziyi/Desktop/MA678-midterm-project/5.jpeg)
+---
+
+Step 3: Modeling
+
+I think draw a scatter plot of each variables with love is a good way to indicate them potential relationship. For my project, fit a simple linear regression is not enough. I chose to fit poisson regression in modeling, where love is dependent variable and price, sum, rating and category are independent variables. 
+
+![(Fit A Poisson Model)](/Users/baiziyi/Desktop/MA678-midterm-project/6.jpeg)
+
+In my model, anti-aging is automatically be chosen as dummy variable. As we can see, all predictors are significant. Furthermore, we need to check this model fit internally and calculate the confidence interval.  
+
+Then, I draw a binned residual plot th detect the residuals. Most of the plots are detected by the model, only a few of them fall outside the confidence bands.
+
+![(Binned Residual Plot)](/Users/baiziyi/Desktop/MA678-midterm-project/7.jpeg)
+
+
+
+### 4. Result
+
+Firstly, I will interpret the coefficients of my model. 
+Intercept: When an anti-aging product has average price and rating, don't take any promotion ways, it's predicted receive 7.20e+00 number of love. 
+Price: A product tends to receive -4.79e-03 less love as it's price increases one dollar, keeping everything else constant. 
+Sum: A product tends to receive -2.56e-01 less love as it has one more promotion way, keeping everything else constant.
+Rating: A product tends to receive 5.74e-01 more love as it's rating increases one unit, keeping everything else constant.
+categoryCandle: Candle products tend to have -2.93e+00 less love than anti-aging products, keeping everything else constant.
+categoryEye Brushes: Eye brushes products tend to have -4.62e-01 less love than anti-aging products, keeping everything else constant.
+categoryEyeshadow: Candle products tend to have 1.40e+00 more love than anti-aging products, keeping everything else constant.
+categoryFace Masks: Face Masks products tend to have 6.67e-01 more love than anti-aging products, keeping everything else constant.
+categoryHair Oil: Hair Oil products tend to have 6.96e-02 more love than anti-aging products, keeping everything else constant.
+categoryLipstick: Lipstick products tend to have 1.64e+00 more love than anti-aging products, keeping everything else constant.
+categoryPerfume: Perfume products tend to have -2.60e-01 less love than anti-aging products, keeping everything else constant.
+categoryShampoo: Shampoo products tend to have -5.37e-01 less love than anti-aging products, keeping everything else constant.
+categoryShaving: Shaving products tend to have -2.16e+00 less love than anti-aging products, keeping everything else constant.
+
+Secondly, I manually checked the 95% confidence interval of my model, which is from 14677 to 20136, which means 95% products' number of love will fall between 14677 to 20136. Also, I checked each variable's confidence interval using `confint` function at 95% of confidence interval. The result is as following graph.
+
+![(CI Of Each Variable)](/Users/baiziyi/Desktop/MA678-midterm-project/8.jpeg)
+
+### 5. Discussion 
+
+

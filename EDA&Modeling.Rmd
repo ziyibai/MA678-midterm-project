@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load("ggplot2","tidyverse","rstanarm","dplyr","pwr","MASS","arm")
+pacman::p_load("ggplot2","tidyverse","rstanarm","dplyr","pwr","MASS","arm","corrgram")
 ```
 
 ## Import Data
@@ -18,110 +18,176 @@ sephora <- read.csv("sephora.csv")
 
 ## Data Cleaning
 ```{r}
-sephora$MarketingFlags[which(sephora$MarketingFlags=='True')]=1
-sephora$MarketingFlags <- as.numeric(sephora$MarketingFlags)
 ```
-
 
 ## Initial EDA 
 ```{r pressure, echo=FALSE}
-# Category & Rating
-category1 <- aggregate(rating~category,data=sephora,FUN = mean)
-category2 <- aggregate(number_of_reviews~category,data=sephora,FUN = mean)
-category3 <- aggregate(love~category,data=sephora,FUN = mean)
-category4 <- aggregate(price~category,data=sephora,FUN = mean)
+library(corrgram)
+corre <- subset(sephora,select = c("id","brand","rating","love","number_of_reviews","price","online_only","exclusive","limited_edition","limited_time_offer"))
+corre <- data.frame(corre)
+corrgram(corre,order=TRUE,lower.panel=panel.shade,upper.panel=panel.pie,text.panel=panel.txt,main="Correlation Of Sephora Intercorrelations")
+```
+
+```{r}
+unique(sephora$category)
+#randomly choose 10 categories products 
+love <- sephora %>% filter(category=="Perfume"|category=="Lipstick"|category=="Shampoo"|category=="Anti-Aging"|category=="Face Masks"|category=="Eye Brushes"|category=="Eyeshadow"|category=="Hair Oil"|category=="Shaving"|category=="Candles")
+#add how many types of promotion way into dataset, named as sum
+love$sum <- love$online_only + love$exclusive + love$limited_edition + love$limited_time_offer
+love$sum <- as.numeric(love$sum)
+```
+
+```{r}
+#count sum 
+length(which(love[,22]==0))
+length(which(love[,22]==1))
+length(which(love[,22]==2))
+length(which(love[,22]==3))
+length(which(love[,22]==4))
+```
+
+## Further EDA
+### 1.How many love products recevie in total of different category 
+```{r}
+category1 <- aggregate(love~category,data = love, FUN = mean)
+category2 <- aggregate(rating~category,data = love, FUN = mean)
+category3 <- aggregate(price~category,data = love, FUN = mean)
+category4 <- aggregate(sum~category,data = love, FUN = mean)
 
 left_join(category1,category2,c("category"="category")) -> category
 left_join(category3,category, c("category"="category")) -> category
 left_join(category4,category, c("category"="category")) -> category
-```
 
-```{r}
- p1 <- category[c('101','70','96','32','95','33','52','47','92','53'),]
-ggplot(data=p1,aes(x=category,y=love)) +
-  geom_bar(stat="identity",fill="lightblue",color="black") +
-  labs(title="Average Love For Top10 Most Famous Beauty Products") +
+category %>% 
+  mutate(category=fct_reorder(category,love)) %>%
+ggplot(aes(x=category,y=love+price,fill=category)) +
+  geom_col(position="dodge")+
+  labs(title="Average Number Of Love For 10 Cosmetic Products") +
   xlab("Category") +
-  ylab("Average Love Number") +
+  ylab("Average Number Of Love") +
   theme(axis.text.x = element_text(angle = 60, hjust = 1),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 13, face = "bold"))
 ```
 
+### 2. Boxplot of love group by whether have promotion way or not
 ```{r}
-hist(sephora$rating,col="pink")
-hist(sephora$price,col="orange")
-hist(sephora$number_of_reviews,col="lightgreen",breaks = 3)
-hist(sephora$sum,col="purple",breaks=3)
-```
-
-```{r}
-library(corrgram)
-corre <- subset(sephora,select = c("id","brand","rating","love","number_of_reviews","price","online_only","exclusive","limited_edition","limited_time_offer"))
-corre <- data.frame(corre)
-corrgram(corre,order=TRUE,lower.panel=panel.shade,upper.panel=panel.pie,text.panel=panel.txt,main="Correlation Of Sephora Intercorrelations")
-#result <- aov(rating~love*price*number_of_reviews*online_only*exclusive*limited_edition*limited_time_offer,data=sephora)
-#print(summary(result))
-```
-```{r}
-# count marketing flags
-length(which(sephora[,18]==1))
-length(which(sephora[,19]==1))
-length(which(sephora[,20]==1))
-length(which(sephora[,21]==1))
-
-sephora$sum <- sephora$online_only + sephora$exclusive + sephora$limited_edition + sephora$limited_time_offer
-length(which(sephora[,22]==1))
-length(which(sephora[,22]==2))
-length(which(sephora[,22]==3))
-length(which(sephora[,22]==4))
-length(which(sephora[,22]==0))
-```
-
-## Further EDA
-
-```{r}
-#rating of marketing vs. not
-marketing <- filter(sephora, sum!="0")
-no_marketing <- filter(sephora,sum=="0")
-
-ggplot(data=marketing)+
-  geom_boxplot(aes(x=category,y=rating),fill="lightblue")+
-  labs(title="Boxplot of Rating For Marketing Products",x="Category",y="Rating")+
-  theme(plot.title = element_text(size = 18),
-        axis.text = element_text(size =  16),
-        axis.title.x = element_text(size = 16),
-        axis.title.y = element_text(size = 16)) + 
+ggplot(data=love,aes(x=category,y=love,fill=factor(sum)))+
+  geom_boxplot(outlier.colour=NA,notch=F)+
+  labs(title="Boxplot of Love For Products With Different Number Of Promotion Ways",x="Category",y="Number Of Love Receives")+
+  theme(plot.title = element_text(size = 13),
+        axis.text = element_text(size =  14),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14)) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1,size=6)) +
-  theme(plot.title = element_text(hjust = 0.5))
-
-ggplot(data=no_marketing)+
-  geom_boxplot(aes(x=category,y=rating),fill="lightblue")+
-  labs(title="Boxplot of Rating For Non-Marketing Products",x="Category",y="Rating")+
-  theme(plot.title = element_text(size = 18),
-        axis.text = element_text(size =  16),
-        axis.title.x = element_text(size = 16),
-        axis.title.y = element_text(size = 16)) + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=6)) +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5))+
+  coord_cartesian(ylim = c(0, 125000))+
+  labs(fill="Number Of Promotion Ways")+
+  scale_fill_discrete(labels= c('0','1','2','3','4'))
 ```
 
+### 3.Price
 ```{r}
-top10 <- sephora[c('4603','5838','273','4953','5843','7037','2822','3587','304','2824'),]
-
+#How the love change with the increase of price
+love %>% 
+  mutate(category=fct_reorder(category,love)) %>%
+ggplot(aes(x=price,y=love,colour=category))+
+  geom_point()+
+  facet_wrap(~category)+
+  labs(title = "How the love change with the increase of price")
 ```
 
+### 4.Rating 
+```{r}
+#How the love change with the increase of rating
+love %>% 
+  mutate(category=fct_reorder(category,love)) %>%
+ggplot(aes(x=rating,y=love,colour=category))+
+  geom_point()+
+  facet_wrap(~category)+
+  labs(title = "How the love change with the increase of rating")
+```
 
 ## Modeling
-```{r}
-fit1 <- stan_glm(rating~love+number_of_reviews+price+online_only+exclusive+limited_edition+limited_time_offer,data=sephora,refresh=0,digets=2)
-print(fit1)
 
+```{r}
+#look at the distribution
+#hist(love$rating,col="pink")
+#hist(love$price,col="orange")
+#hist(love$number_of_reviews,col="lightgreen",breaks = 3)
+#hist(love$sum,col="purple",breaks=3)
+
+#look at the potential relationship between love and chosen independent variables
+ggplot(aes(x=price,y=love),data=love)+
+  geom_jitter()+
+  scale_x_log10()
+ggplot(aes(x=number_of_reviews,y=love),data=love)+
+  geom_jitter()+
+  scale_y_log10()+
+  scale_x_log10()
+ggplot(aes(x=sum,y=love),data=love)+
+  geom_jitter()+
+  scale_x_log10()+
+  scale_y_log10()
+ggplot(aes(x=rating,y=love),data=love)+
+  geom_jitter()+
+  scale_x_log10()
+```
+
+
+```{r}
+fit1 <- glm(love~price+sum+rating+category,family=poisson(link = "log"),data=love)
+print(summary(fit1),digits=3)
+coefplot(fit1)
+```
+
+```{r}
+#residuals vs. predicted values 
+sims <- as.matrix(fit1)
+predicted <- predict(fit1)
+resid <- love$love - predicted
+
+#binned plot
+residuals(fit1)
+binnedplot(fitted(fit1),resid(fit1))
+```
+
+```{r}
+#CI
+n <- length(love$love)
+estimate <- mean(love$love)
+se <- sd(love$love)/sqrt(n)
+int95 <- estimate + qt(c(0.025,0.975),n-1)*se
+
+confint(fit1,level=0.95)
+
+#pred.int <- predict(fit1,interval = "prediction")
+#new <- cbind(love,pred.int)
+#p <- ggplot(new,aes(x=price+sum+rating,y=love))+
+#geom_point()+
+  #stat_smooth(method = stan_glm)
+#p+geom_line(aes(y=lwr),color="red",linetype="dashed")+
+  #geom_line(aes(y=upr),color="red",linetype="dashed")
+#outlier
+qqnorm(love$love)
+qqline(love$love,col=2,lwd=2)
+qqplot(love$price, love$love, col="blue",qq.lines="red")
+
+#leverage
+highleverage <- function(fit1){
+  p<-length(coefficients(fit1))
+  n<-length(fitted(fit1))
+  ratio=p/n
+  plot(hatvalues(fit1),main="Index Plot of Ratio")
+  abline(h=c(2,3)*ratio,col="red",lty=2)
+  identify(1:n,hatvalues(fit1),names(hatvalues(fit1)))
+}
+highleverage(fit1)
+
+#cross validation
 loo1 <- loo(fit1)
 print(loo1)
 ```
-
-
 
 
 
