@@ -109,7 +109,7 @@ ggplot(aes(x=rating,y=love,colour=category))+
 ```
 
 ## Modeling
-
+### 1. Plot each variable 
 ```{r}
 #look at the distribution
 #hist(love$rating,col="pink")
@@ -134,22 +134,57 @@ ggplot(aes(x=rating,y=love),data=love)+
   scale_x_log10()
 ```
 
-
+### 2. Fit models
 ```{r}
-fit1 <- glm(love~price+sum+rating+category,family=poisson(link = "log"),data=love)
+#fit poisson model
+fit1 <- stan_glm(love~price+sum+rating+category,family=poisson(link = "log"),data=love,refresh=0)
 print(summary(fit1),digits=3)
-coefplot(fit1)
+#test over-dispersion
+library(qcc)
+qcc.overdispersion.test(love$love,type="poisson")
+#I do have the problem of over-dispersion 
 ```
 
 ```{r}
-#residuals vs. predicted values 
-sims <- as.matrix(fit1)
-predicted <- predict(fit1)
-resid <- love$love - predicted
+#so I fit quasi-poisson model
+fit2 <- glm(love~price+sum+rating+category,family=quasipoisson(link = "log"),data=love)
+print(summary(fit2),digits=3)
+```
 
-#binned plot
+```{r}
+#fit neg_binomial_2 model
+fit3 <- stan_glm(love~price+sum+rating+category,family=neg_binomial_2(link = "log"),data=love,refresh=0)
+print(summary(fit3),digits=3)
+```
+
+```{r}
+#fit lmer model 
+fit4 <- lmer(love~price+sum+rating+(1|category),data=love)
+print(summary(fit4))
+```
+
+## Check internal validation 
+```{r}
+par(mfrow=c(2,2))
+plot(fit2)
+plot(fit3)
+plot(fit4)
+```
+
+```{r}
+#binned residual plot
+par(mfrow=c(2,2))
 residuals(fit1)
 binnedplot(fitted(fit1),resid(fit1))
+
+residuals(fit2)
+binnedplot(fitted(fit2),resid(fit2))
+
+residuals(fit3)
+binnedplot(fitted(fit3),resid(fit3))
+
+residuals(fit4)
+binnedplot(fitted(fit4),resid(fit4))
 ```
 
 ```{r}
@@ -159,7 +194,7 @@ estimate <- mean(love$love)
 se <- sd(love$love)/sqrt(n)
 int95 <- estimate + qt(c(0.025,0.975),n-1)*se
 
-confint(fit1,level=0.95)
+confint(fit2,level=0.95)
 
 #pred.int <- predict(fit1,interval = "prediction")
 #new <- cbind(love,pred.int)
@@ -183,10 +218,15 @@ highleverage <- function(fit1){
   identify(1:n,hatvalues(fit1),names(hatvalues(fit1)))
 }
 highleverage(fit1)
+```
 
+```{r}
 #cross validation
-loo1 <- loo(fit1)
-print(loo1)
+#loo1 <- loo(fit1)
+#print(loo1)
+
+loo4 <- loo(fit4)
+print(loo4)
 ```
 
 

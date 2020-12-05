@@ -44,7 +44,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### 1. Abstract
 
-I gathered dataset from [kaggle](https://www.kaggle.com/raghadalharbi/all-products-available-on-sephora-website?select=sephora_website_dataset.csv), which includes more than 9,000 products with their ratings and ingredient lists. One thing that I am interested is what factors may have more influence on a product's online rating. 
+My project used the dataset from [kaggle](https://www.kaggle.com/raghadalharbi/all-products-available-on-sephora-website?select=sephora_website_dataset.csv) to explore which factors may affect how many love a Sephora online product receives. My original datatset includes more than 9,000 products and more than hundreds type of products, so that I picked 10 specific type of products along with product's rating, price, how many promotion ways they have to build several models and pick the best one.
 
 ### 2. Introduction 
 
@@ -86,34 +86,33 @@ Last but not the least, I make graph about how the number of love changes as the
 
 Step 3: Modeling
 
-I think draw a scatter plot of each variables with love is a good way to indicate them potential relationship. For my project, fit a simple linear regression is not enough. I chose to fit poisson regression in modeling, where love is dependent variable and price, sum, rating and category are independent variables. 
+I think draw a scatter plot of each variables with love is a good way to indicate their potential relationship. Love is dependent variable in my model, price, sum, rating and category are independent variables. 
 
-![(Fit A Poisson Model)](/Users/baiziyi/Desktop/MA678-midterm-project/6.jpeg)
+I fitted 4 models for my project. The first one is poisson model, because it has the problem of over-dispersion, so I also fitted quasipoisson model. Also, I fit neg_binomial_2 and lmer model to compare the outcomes. Then, I draw each model's binned residual plot to compare internal validation. For my personal point of view, I think the left bottom one's binned residual plot is the best which is the third model. Basically all dots are included in the line and they are centered around the average residual. 
 
-In my model, anti-aging is automatically be chosen as dummy variable. As we can see, all predictors are significant. Furthermore, we need to check this model fit internally and calculate the confidence interval.  
+![(Binned Residual Plot)](/Users/baiziyi/Desktop/MA678-midterm-project/6.jpeg)
 
-Then, I draw a binned residual plot th detect the residuals. Most of the plots are detected by the model, only a few of them fall outside the confidence bands.
+Ultimately, I choose the third model, neg_binomial_2 model. In my model, anti-aging product is automatically been chosen as dummy variable. The model's outcome is as following:
 
-![(Binned Residual Plot)](/Users/baiziyi/Desktop/MA678-midterm-project/7.jpeg)
-
-
+![(Fit Neg_binomial_2 Model)](/Users/baiziyi/Desktop/MA678-midterm-project/6.jpeg)
+In the next part, I will explain this model in detail and calculate the confidence interval for further analysis. 
 
 ### 4. Result
 
 Firstly, I will interpret the coefficients of my model. 
-Intercept: When an anti-aging product has average price and rating, don't take any promotion ways, it's predicted receive 7.20e+00 number of love. 
-Price: A product tends to receive -4.79e-03 less love as it's price increases one dollar, keeping everything else constant. 
-Sum: A product tends to receive -2.56e-01 less love as it has one more promotion way, keeping everything else constant.
-Rating: A product tends to receive 5.74e-01 more love as it's rating increases one unit, keeping everything else constant.
-categoryCandle: Candle products tend to have -2.93e+00 less love than anti-aging products, keeping everything else constant.
-categoryEye Brushes: Eye brushes products tend to have -4.62e-01 less love than anti-aging products, keeping everything else constant.
-categoryEyeshadow: Candle products tend to have 1.40e+00 more love than anti-aging products, keeping everything else constant.
-categoryFace Masks: Face Masks products tend to have 6.67e-01 more love than anti-aging products, keeping everything else constant.
-categoryHair Oil: Hair Oil products tend to have 6.96e-02 more love than anti-aging products, keeping everything else constant.
-categoryLipstick: Lipstick products tend to have 1.64e+00 more love than anti-aging products, keeping everything else constant.
-categoryPerfume: Perfume products tend to have -2.60e-01 less love than anti-aging products, keeping everything else constant.
-categoryShampoo: Shampoo products tend to have -5.37e-01 less love than anti-aging products, keeping everything else constant.
-categoryShaving: Shaving products tend to have -2.16e+00 less love than anti-aging products, keeping everything else constant.
+Intercept: When an anti-aging product has average price, rating, and don't take any promotion ways, it's predicted receive 7.184 number of love. 
+Price: A product tends to receive -0.002 less love as it's price increases one dollar, keeping everything else constant. 
+Sum: A product tends to receive -0.507 less love as it has one more promotion way, keeping everything else constant.
+Rating: A product tends to receive 0.573 more love as it's rating increases one unit, keeping everything else constant.
+categoryCandle: Candle products tend to have -1.955 less love than anti-aging products, keeping everything else constant.
+categoryEye Brushes: Eye brushes products tend to have -0.29 less love than anti-aging products, keeping everything else constant.
+categoryEyeshadow: Candle products tend to have 1.351 more love than anti-aging products, keeping everything else constant.
+categoryFace Masks: Face Masks products tend to have 0.71 more love than anti-aging products, keeping everything else constant.
+categoryHair Oil: Hair Oil products tend to have 0.018 more love than anti-aging products, keeping everything else constant.
+categoryLipstick: Lipstick products tend to have 1.721 more love than anti-aging products, keeping everything else constant.
+categoryPerfume: Perfume products tend to have -0.523 less love than anti-aging products, keeping everything else constant.
+categoryShampoo: Shampoo products tend to have -0.6 less love than anti-aging products, keeping everything else constant.
+categoryShaving: Shaving products tend to have -2.099 less love than anti-aging products, keeping everything else constant.
 
 Secondly, I manually checked the 95% confidence interval of my model, which is from 14677 to 20136, which means 95% products' number of love will fall between 14677 to 20136. Also, I checked each variable's confidence interval using `confint` function at 95% of confidence interval. The result is as following graph.
 
@@ -121,4 +120,5 @@ Secondly, I manually checked the 95% confidence interval of my model, which is f
 
 ### 5. Discussion 
 
+Although I fit 4 models, none of them fit perfectlly well. I guess this happens when we deal with real dataset. I have tried to take log(number_of_reviews+1) which I have to do since there are lots of 0 in thin column, as an offset in my model. However, the binned residual plot doesn't fit very well in this way, which kind of surprised me. Also, to make my model fit better, I think include customers' demographic information is a good choice. 
 
