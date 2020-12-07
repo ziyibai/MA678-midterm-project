@@ -118,6 +118,7 @@ ggplot(aes(x=rating,y=love,colour=category))+
 #hist(love$sum,col="purple",breaks=3)
 
 #look at the potential relationship between love and chosen independent variables
+par(mfrow=c(2,2))
 ggplot(aes(x=price,y=love),data=love)+
   geom_jitter()+
   scale_x_log10()
@@ -139,6 +140,7 @@ ggplot(aes(x=rating,y=love),data=love)+
 #fit poisson model
 fit1 <- stan_glm(love~price+sum+rating+category,family=poisson(link = "log"),data=love,refresh=0)
 print(summary(fit1),digits=3)
+saveRDS(fit1,"fit1.rds")
 #test over-dispersion
 library(qcc)
 qcc.overdispersion.test(love$love,type="poisson")
@@ -154,6 +156,7 @@ print(summary(fit2),digits=3)
 ```{r}
 #fit neg_binomial_2 model
 fit3 <- stan_glm(love~price+sum+rating+category,family=neg_binomial_2(link = "log"),data=love,refresh=0)
+saveRDS(fit3,"fit3.rds")
 print(summary(fit3),digits=3)
 ```
 
