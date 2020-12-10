@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load("ggplot2","tidyverse","rstanarm","dplyr","pwr","MASS","arm","corrgram")
+pacman::p_load("ggplot2","tidyverse","rstanarm","dplyr","pwr","MASS","arm","corrgram","lme4")
 ```
 
 ## Import Data
@@ -18,12 +18,15 @@ sephora <- read.csv("sephora.csv")
 
 ## Data Cleaning
 ```{r}
+#randomly choose 10 categories products 
+sephora$sum <- sephora$online_only + sephora$exclusive + sephora$limited_edition + sephora$limited_time_offer
+sephora$sum <- as.numeric(sephora$sum)
 ```
 
 ## Initial EDA 
 ```{r pressure, echo=FALSE}
 library(corrgram)
-corre <- subset(sephora,select = c("id","brand","rating","love","number_of_reviews","price","online_only","exclusive","limited_edition","limited_time_offer"))
+corre <- subset(sephora,select = c("id","brand","rating","love","number_of_reviews","price","online_only","exclusive","limited_edition","limited_time_offer","sum"))
 corre <- data.frame(corre)
 corrgram(corre,order=TRUE,lower.panel=panel.shade,upper.panel=panel.pie,text.panel=panel.txt,main="Correlation Of Sephora Intercorrelations")
 ```
@@ -33,8 +36,6 @@ unique(sephora$category)
 #randomly choose 10 categories products 
 love <- sephora %>% filter(category=="Perfume"|category=="Lipstick"|category=="Shampoo"|category=="Anti-Aging"|category=="Face Masks"|category=="Eye Brushes"|category=="Eyeshadow"|category=="Hair Oil"|category=="Shaving"|category=="Candles")
 #add how many types of promotion way into dataset, named as sum
-love$sum <- love$online_only + love$exclusive + love$limited_edition + love$limited_time_offer
-love$sum <- as.numeric(love$sum)
 ```
 
 ```{r}
@@ -60,7 +61,7 @@ left_join(category4,category, c("category"="category")) -> category
 
 category %>% 
   mutate(category=fct_reorder(category,love)) %>%
-ggplot(aes(x=category,y=love+price,fill=category)) +
+  ggplot(aes(x=category,y=love+price,fill=category)) +
   geom_col(position="dodge")+
   labs(title="Average Number Of Love For 10 Cosmetic Products") +
   xlab("Category") +
@@ -133,6 +134,11 @@ ggplot(aes(x=sum,y=love),data=love)+
 ggplot(aes(x=rating,y=love),data=love)+
   geom_jitter()+
   scale_x_log10()
+
+ggplot(aes(x=rating+price+sum,y=love),data=love)+
+  geom_jitter()+
+  scale_y_log10()+
+  scale_x_log10()
 ```
 
 ### 2. Fit models
@@ -161,9 +167,21 @@ print(summary(fit3),digits=3)
 ```
 
 ```{r}
-#fit lmer model 
-fit4 <- lmer(love~price+sum+rating+(1|category),data=love)
+#fit glmer model 
+fit4 <- glmer(love~price+sum+rating+(1|category)+(1|id),family=poisson(link="log"),data=love)
 print(summary(fit4))
+
+invlogit(8.1921193)
+invlogit(0.0013805)
+invlogit(0.5613717)
+invlogit(0.0886627)
+```
+
+```{r}
+#use log(number_of_reviews+1) as offset
+fit5 <- stan_glm(love~price+sum+rating+category,family=neg_binomial_2,offset=log(number_of_reviews+1),data=love,refresh=0)
+print(summary(fit5))
+#this one fits not well so I don't include it in the main part.
 ```
 
 ## Check internal validation 
@@ -172,6 +190,7 @@ par(mfrow=c(2,2))
 plot(fit2)
 plot(fit3)
 plot(fit4)
+lattice::dotplot(ranef(fit4,condVar = TRUE))
 ```
 
 ```{r}
@@ -191,13 +210,19 @@ binnedplot(fitted(fit4),resid(fit4))
 ```
 
 ```{r}
+#install.packages("effects")
+library(effects)
+plot(allEffects(fit4))
+```
+
+```{r}
 #CI
 n <- length(love$love)
 estimate <- mean(love$love)
 se <- sd(love$love)/sqrt(n)
 int95 <- estimate + qt(c(0.025,0.975),n-1)*se
 
-confint(fit2,level=0.95)
+confint(fit4,level=0.95)
 
 #pred.int <- predict(fit1,interval = "prediction")
 #new <- cbind(love,pred.int)
@@ -210,27 +235,8 @@ confint(fit2,level=0.95)
 qqnorm(love$love)
 qqline(love$love,col=2,lwd=2)
 qqplot(love$price, love$love, col="blue",qq.lines="red")
-
-#leverage
-highleverage <- function(fit1){
-  p<-length(coefficients(fit1))
-  n<-length(fitted(fit1))
-  ratio=p/n
-  plot(hatvalues(fit1),main="Index Plot of Ratio")
-  abline(h=c(2,3)*ratio,col="red",lty=2)
-  identify(1:n,hatvalues(fit1),names(hatvalues(fit1)))
-}
-highleverage(fit1)
 ```
 
-```{r}
-#cross validation
-#loo1 <- loo(fit1)
-#print(loo1)
-
-loo4 <- loo(fit4)
-print(loo4)
-```
 
 
 
